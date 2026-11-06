@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use he-checks or its slide list in research, please cite it as below."
+title: "he-checks: collapsed Macenko stain vectors and mis-scaled TCGA colorectal slides"
+type: software
+authors:
+  - family-names: Parrish
+    given-names: Russell
+    orcid: https://orcid.org/0009-0008-9781-7995
+version: "0.1.0"
+license: MIT
+repository-code: https://github.com/parallaxmetrology/he-checks
+keywords: [computational pathology, H&E, stain normalization, Macenko, TCGA, pixel spacing]
+abstract: >
+  A check for Macenko-style stain-vector estimation that detects the collapse caused
+  by an SVD sign ambiguity (H and E vectors returned a fraction of a degree apart),
+  with a sign-safe estimator; and a list of 25 TCGA-COAD/READ diagnostic slides
+  whose IDC pixel spacing (0.5 um/px) is too fine by roughly 2x.

@@ -1,0 +1,22 @@
+name: What the check found in your pipeline
+description: Ran check_estimator or diagnose_image on your own stain step? Collapsed or not, report it here.
+labels: [results]
+body:
+  - type: input
+    id: implementation
+    attributes:
+      label: Stain estimator and library
+      placeholder: e.g. hand-written Macenko, staintools, torchstain, tiatoolbox, your own
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: What it reported
+      description: Median H/E angle, share of tiles degenerate or suspect, number of tiles, tissue type. No images or patient data needed.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: numpy or framework version, OS

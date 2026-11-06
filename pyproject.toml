@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "he-checks"
+version = "0.1.0"
+description = "Two checks for H&E pipelines: collapsed Macenko stain vectors, and 25 TCGA colorectal slides whose stated pixel spacing is wrong."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Russell Parrish", email = "russellgparrish@gmail.com" }]
+requires-python = ">=3.9"
+keywords = ["computational pathology", "H&E", "stain normalization", "Macenko", "TCGA", "pixel spacing", "data quality"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Medical Science Apps.",
+  "Topic :: Scientific/Engineering :: Image Processing",
+  "Programming Language :: Python :: 3",
+]
+dependencies = ["numpy>=1.23", "pillow>=9.5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff"]
+
+[project.scripts]
+he-checks = "hechecks.cli:main"
+
+[project.urls]
+Source = "https://github.com/parallaxmetrology/he-checks"
+Issues = "https://github.com/parallaxmetrology/he-checks/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hechecks"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"data/tcga_derivative_slides.csv" = "hechecks/data/tcga_derivative_slides.csv"
