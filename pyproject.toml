@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "he-checks"
-version = "0.1.0"
-description = "Two checks for H&E pipelines: collapsed Macenko stain vectors, and 25 TCGA colorectal slides whose stated pixel spacing is wrong."
+version = "0.2.0"
+description = "Checks for silent failures in H&E pipelines and datasets: collapsed Macenko stain vectors, 25 TCGA colorectal slides with wrong pixel spacing, and tinted background tiles in CRC-VAL-HE-7K."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

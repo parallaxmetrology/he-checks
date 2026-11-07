@@ -30,15 +30,19 @@ def derivative_slides() -> tuple[dict, ...]:
 
 
 def is_derivative_slide(identifier: str) -> bool:
-    """True if a GDC file id, slide file name, slide barcode or patient id is one of the 25.
+    """True if a GDC file id, slide file name, slide barcode, patient id or tile name is one of the 25.
 
-    Patient ids match on the diagnostic slide only: these patients' frozen
-    (TS/BS) slides are regular scans and are not affected.
+    Tile names from the Kather TCGA tile archive (Zenodo 3784345) start with the
+    slide barcode, e.g. `TCGA-AA-3496-01Z-00-DX1.B109..._(3663,2051).jpg`, and match
+    on that prefix. Patient ids match on the diagnostic slide only: these patients'
+    frozen (TS/BS) slides are regular scans and are not affected.
     """
     s = identifier.strip().replace("\\", "/").split("/")[-1].casefold()  # paths reduce to the file name
     for row in derivative_slides():
         name = row["file_name"]
         barcode = name.split(".")[0]  # e.g. TCGA-AA-3488-01Z-00-DX1
         if s in {v.casefold() for v in (row["file_id"], name, barcode, row["patient"])}:
+            return True
+        if s.startswith(barcode.casefold() + "."):  # a tile or derived file named after the slide
             return True
     return False

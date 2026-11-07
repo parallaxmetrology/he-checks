@@ -1,4 +1,4 @@
-"""Command line: `he-checks stain <images...>` and `he-checks tcga <ids...>`."""
+"""Command line: `he-checks stain <images...>`, `he-checks tcga <ids...>`, `he-checks tint <images...>`."""
 from __future__ import annotations
 
 import argparse
@@ -37,6 +37,24 @@ def _tcga(ids: list[str]) -> int:
     return int(hit)
 
 
+def _tint(paths: list[str]) -> int:
+    from PIL import Image
+
+    from .tiles import tile_tint
+
+    flagged = 0
+    for p in paths:
+        try:
+            t = tile_tint(np.asarray(Image.open(p).convert("RGB")))
+        except (OSError, ValueError) as e:
+            print(json.dumps({"image": p, "status": "error", "error": str(e)}))
+            flagged = 1
+            continue
+        print(json.dumps({"image": p, **t.as_dict()}))
+        flagged |= t.status != "neutral"
+    return int(flagged)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="he-checks")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -45,8 +63,12 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--centre", action="store_true", help="mean-centre OD before the SVD")
     t = sub.add_parser("tcga", help="flag TCGA slides with unreliable pixel spacing")
     t.add_argument("ids", nargs="+", help="GDC file ids, slide file names, barcodes or patient ids")
+    b = sub.add_parser("tint", help="check whether background tiles are neutral glass")
+    b.add_argument("images", nargs="+")
     a = ap.parse_args(argv)
-    return _stain(a.images, a.centre) if a.cmd == "stain" else _tcga(a.ids)
+    if a.cmd == "stain":
+        return _stain(a.images, a.centre)
+    return _tcga(a.ids) if a.cmd == "tcga" else _tint(a.images)
 
 
 if __name__ == "__main__":
