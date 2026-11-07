@@ -23,10 +23,17 @@ def _path() -> Path:
 
 
 @lru_cache(maxsize=1)
-def derivative_slides() -> tuple[dict, ...]:
-    """All 25 rows as dicts (patient, project, file_id, file_name, ... per-slide bearings)."""
+def _rows() -> tuple[dict, ...]:
     with open(_path(), newline="") as f:
         return tuple(csv.DictReader(f))
+
+
+def derivative_slides() -> tuple[dict, ...]:
+    """All 25 rows as dicts (patient, project, file_id, file_name, ... per-slide bearings).
+
+    Each call returns fresh copies, so changing a returned row does not change the list.
+    """
+    return tuple(dict(r) for r in _rows())
 
 
 def is_derivative_slide(identifier: str) -> bool:
@@ -38,7 +45,7 @@ def is_derivative_slide(identifier: str) -> bool:
     frozen (TS/BS) slides are regular scans and are not affected.
     """
     s = identifier.strip().replace("\\", "/").split("/")[-1].casefold()  # paths reduce to the file name
-    for row in derivative_slides():
+    for row in _rows():
         name = row["file_name"]
         barcode = name.split(".")[0]  # e.g. TCGA-AA-3488-01Z-00-DX1
         if s in {v.casefold() for v in (row["file_id"], name, barcode, row["patient"])}:

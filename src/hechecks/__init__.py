@@ -19,7 +19,7 @@ from .stain import (
 from .tcga import derivative_slides, is_derivative_slide
 from .tiles import TileTint, tile_tint
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 __all__ = [
     "DEGENERATE_DEG",

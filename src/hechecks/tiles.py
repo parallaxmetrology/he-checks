@@ -13,6 +13,8 @@ from dataclasses import asdict, dataclass
 
 import numpy as np
 
+from ._image import rgb_0_255
+
 # Heuristics from the data in docs/kather-datasets.md: unnormalised background tiles
 # had median colour spread 0.3 and brightness about 243; all 847 CRC-VAL-HE-7K
 # background tiles had spread 37 or more and brightness under 200.
@@ -36,12 +38,10 @@ def tile_tint(image: np.ndarray) -> TileTint:
 
     Meant for tiles that should be blank or nearly blank (a background class).
     "tinted": channel means differ by more than 20; "dark": neutral but darker
-    than 200; "neutral" otherwise. Tissue tiles are tinted by design.
+    than 200; "neutral" otherwise, all in 0-255 units (other dtypes and 0-1 floats
+    are rescaled first). Tissue tiles are tinted by design.
     """
-    rgb = np.asarray(image)
-    if rgb.ndim != 3 or rgb.shape[2] < 3:
-        raise ValueError("expected an H x W x 3 RGB image")
-    m = rgb[..., :3].reshape(-1, 3).astype(float).mean(0)
+    m = rgb_0_255(image).reshape(-1, 3).mean(0)
     spread = float(m.max() - m.min())
     bright = float(m.mean())
     status = "tinted" if spread > TINT_SPREAD else "dark" if bright < GLASS_BRIGHTNESS else "neutral"

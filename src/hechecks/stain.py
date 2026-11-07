@@ -23,6 +23,8 @@ from typing import Callable
 
 import numpy as np
 
+from ._image import rgb_0_255
+
 # Thresholds are heuristics from TCGA colorectal tiles (docs/stain-sign.md):
 # healthy per-tile estimates had median H/E angles of 14-16 degrees; collapsed
 # ones had medians of 0.13-0.17 degrees, 96-100% of tiles under 2 degrees.
@@ -35,19 +37,26 @@ RUIFROK_E = np.array([0.07, 0.99, 0.11])
 
 
 def angle_deg(a: np.ndarray, b: np.ndarray) -> float:
-    """Unsigned angle between two directions in degrees (sign of each ignored)."""
+    """Unsigned angle between two directions in degrees (sign of each ignored).
+
+    Returns NaN if either vector is zero or not finite.
+    """
     a = np.asarray(a, float)
     b = np.asarray(b, float)
-    c = abs(a @ b) / (np.linalg.norm(a) * np.linalg.norm(b))
+    na, nb = np.linalg.norm(a), np.linalg.norm(b)
+    if not (np.isfinite(na) and np.isfinite(nb)) or na == 0 or nb == 0:
+        return float("nan")
+    c = abs(a @ b) / (na * nb)
     return float(np.degrees(np.arccos(np.clip(c, -1.0, 1.0))))
 
 
 def optical_density(image: np.ndarray, beta: float = 0.15) -> np.ndarray:
-    """Per-pixel OD of an RGB uint8 image, keeping pixels with OD > beta in every channel."""
-    rgb = np.asarray(image)
-    if rgb.ndim != 3 or rgb.shape[2] < 3:
-        raise ValueError("expected an H x W x 3 RGB image")
-    od = -np.log(np.clip(rgb[..., :3].astype(float) / 255.0, 1e-6, 1.0)).reshape(-1, 3)
+    """Per-pixel OD of an RGB image, keeping pixels with OD > beta in every channel.
+
+    Any integer dtype or a 0-1 float image is accepted and rescaled to 0-255 first.
+    """
+    rgb = rgb_0_255(image)
+    od = -np.log(np.clip(rgb / 255.0, 1e-6, 1.0)).reshape(-1, 3)
     return od[np.all(od > beta, axis=1)]
 
 
@@ -57,7 +66,7 @@ class MatrixCheck:
     condition_number: float   # of the 3x2 matrix used to unmix
     h_vs_ruifrok_h_deg: float
     e_vs_ruifrok_e_deg: float
-    status: str               # "ok", "suspect" or "degenerate"
+    status: str               # "ok", "suspect", "degenerate" or "invalid"
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -68,17 +77,25 @@ def check_stain_matrix(matrix: np.ndarray) -> MatrixCheck:
 
     The angle between the rows is the main reading. Two distinct stains measured
     on real tissue are rarely closer than a few degrees; a fraction of a degree
-    means the estimator returned one direction twice.
+    means the estimator returned one direction twice. A matrix with a zero or
+    non-finite row is reported as "invalid".
     """
     m = np.asarray(matrix, float)
     if m.shape == (3, 2):
         m = m.T
     if m.shape != (2, 3):
         raise ValueError("expected a 2 x 3 (or 3 x 2) stain matrix")
+    if not np.isfinite(m).all() or (np.linalg.norm(m, axis=1) == 0).any():
+        return MatrixCheck(float("nan"), float("inf"), float("nan"), float("nan"), "invalid")
     a = angle_deg(m[0], m[1])
     cond = float(np.linalg.cond(m.T))
     status = "degenerate" if a < DEGENERATE_DEG else "suspect" if a < SUSPECT_DEG else "ok"
     return MatrixCheck(a, cond, angle_deg(m[0], RUIFROK_H), angle_deg(m[1], RUIFROK_E), status)
+
+
+def _check_alpha(alpha: float) -> None:
+    if not 0 < alpha < 50:
+        raise ValueError("alpha is a percentile and must lie strictly between 0 and 50")
 
 
 def _plane(od: np.ndarray, centre: bool) -> np.ndarray:
@@ -113,6 +130,7 @@ def macenko_stain_matrix(image: np.ndarray, beta: float = 0.15, alpha: float = 1
     arctan2 wrap. `centre=True` mean-centres OD before the SVD (equivalent to
     the covariance eigen-decomposition several libraries use).
     """
+    _check_alpha(alpha)
     od = optical_density(image, beta)
     if len(od) < 10:
         raise ValueError("too few tissue pixels above beta")
@@ -148,6 +166,7 @@ def diagnose_image(image: np.ndarray, beta: float = 0.15, alpha: float = 1.0,
     implementation without the fix collapses every time there; another
     library or another data set may differ. Run it on a sample of your tiles.
     """
+    _check_alpha(alpha)
     od = optical_density(image, beta)
     if len(od) < 10:
         raise ValueError("too few tissue pixels above beta")

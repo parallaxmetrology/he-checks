@@ -6,7 +6,7 @@ authors:
   - family-names: Parrish
     given-names: Russell
     orcid: https://orcid.org/0009-0008-9781-7995
-version: "0.2.0"
+version: "0.2.1"
 license: MIT
 repository-code: https://github.com/parallaxmetrology/he-checks
 keywords: [computational pathology, H&E, stain normalization, Macenko, TCGA, pixel spacing]

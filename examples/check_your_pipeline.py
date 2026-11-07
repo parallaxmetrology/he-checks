@@ -25,6 +25,8 @@ def main():
     a = ap.parse_args()
 
     paths = sorted(glob.glob(os.path.join(a.tiles, "*.png")) + glob.glob(os.path.join(a.tiles, "*.jpg")))
+    if not paths:
+        raise SystemExit(f"no .png or .jpg tiles in {a.tiles}")
     images = [np.asarray(Image.open(p).convert("RGB")) for p in paths]
     checks = hc.check_estimator(my_estimator, images)
     print(Counter(c.status for c in checks))

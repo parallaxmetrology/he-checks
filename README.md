@@ -14,7 +14,7 @@ None raises an error, and each quietly changes what gets measured downstream.
 pip install "he-checks @ git+https://github.com/parallaxmetrology/he-checks"
 ```
 
-Python 3.9+, numpy and Pillow.
+Python 3.9+, numpy and Pillow. Images can be uint8, uint16 or float (0–1 or 0–255), RGB or RGBA.
 
 ## 1. Check your stain estimator
 
